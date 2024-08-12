@@ -34,7 +34,7 @@ const EventScheduler = () => {
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    // Ensure this code only runs on the client side
+    // Ensure GAPI is only loaded on the client side
     if (typeof window !== 'undefined') {
       const initClient = () => {
         gapi.client.init({
@@ -47,13 +47,13 @@ const EventScheduler = () => {
   }, []);
 
   const handleSignIn = () => {
-    if (typeof window !== 'undefined') {
+    if (gapi.auth2) {
       gapi.auth2.getAuthInstance().signIn();
     }
   };
 
   const handleSignOut = () => {
-    if (typeof window !== 'undefined') {
+    if (gapi.auth2) {
       gapi.auth2.getAuthInstance().signOut();
     }
   };
@@ -91,7 +91,7 @@ const EventScheduler = () => {
   };
 
   const handleEventCreation = (gapiEvent: gapi.client.calendar.EventInput) => {
-    if (typeof window !== 'undefined') {
+    if (gapi.client && gapi.client.calendar) {
       gapi.client.calendar.events.insert({
         calendarId: 'primary',
         resource: gapiEvent,
@@ -108,6 +108,11 @@ const EventScheduler = () => {
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSubject(e.target.value);
   };
+
+  if (typeof window === 'undefined') {
+    // Return null on the server-side to avoid rendering anything
+    return null;
+  }
 
   return (
     <div className="max-w-md mx-auto p-4">

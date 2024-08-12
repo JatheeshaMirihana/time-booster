@@ -6,7 +6,7 @@ import { gapi } from 'gapi-script';
 interface Event {
   title: string;
   description: string;
-  date: string;  // Keep this as a string to simplify date handling
+  date: string;
   subject: string;
 }
 
@@ -34,7 +34,7 @@ const EventScheduler = () => {
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    // Check if the window object is available (to avoid SSR issues)
+    // Ensure this code only runs on the client side
     if (typeof window !== 'undefined') {
       const initClient = () => {
         gapi.client.init({

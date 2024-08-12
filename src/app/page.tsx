@@ -34,21 +34,28 @@ const EventScheduler = () => {
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    const initClient = () => {
-      gapi.client.init({
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/calendar.events',
-      });
-    };
-    gapi.load('client:auth2', initClient);
+    // Check if the window object is available (to avoid SSR issues)
+    if (typeof window !== 'undefined') {
+      const initClient = () => {
+        gapi.client.init({
+          clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/calendar.events',
+        });
+      };
+      gapi.load('client:auth2', initClient);
+    }
   }, []);
 
   const handleSignIn = () => {
-    gapi.auth2.getAuthInstance().signIn();
+    if (typeof window !== 'undefined') {
+      gapi.auth2.getAuthInstance().signIn();
+    }
   };
 
   const handleSignOut = () => {
-    gapi.auth2.getAuthInstance().signOut();
+    if (typeof window !== 'undefined') {
+      gapi.auth2.getAuthInstance().signOut();
+    }
   };
 
   const handleAddEvent = () => {
@@ -84,16 +91,18 @@ const EventScheduler = () => {
   };
 
   const handleEventCreation = (gapiEvent: gapi.client.calendar.EventInput) => {
-    gapi.client.calendar.events.insert({
-      calendarId: 'primary',
-      resource: gapiEvent,
-    })
-    .then((response: any) => {
-      console.log('Event created:', response.result);
-    })
-    .catch((err: Error) => {
-      console.error('Error creating event:', err);
-    });
+    if (typeof window !== 'undefined') {
+      gapi.client.calendar.events.insert({
+        calendarId: 'primary',
+        resource: gapiEvent,
+      })
+      .then((response: any) => {
+        console.log('Event created:', response.result);
+      })
+      .catch((err: Error) => {
+        console.error('Error creating event:', err);
+      });
+    }
   };
   
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

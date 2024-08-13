@@ -32,7 +32,7 @@ const EventScheduler = () => {
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    // This will only run on the client side
+    // Ensure this only runs on the client side
     if (typeof window !== 'undefined') {
       const initClient = () => {
         gapi.client.init({

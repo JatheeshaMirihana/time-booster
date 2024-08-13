@@ -6,7 +6,7 @@ import { gapi } from 'gapi-script';
 interface Event {
   title: string;
   description: string;
-  date: string; // Keep this as a string to simplify date handling
+  date: string;
   subject: string;
 }
 
@@ -32,14 +32,22 @@ const EventScheduler = () => {
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    // Ensure this only runs on the client side
+    const initClient = () => {
+      gapi.client.init({
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/calendar.events',
+      }).then(() => {
+        if (gapi.auth2) {
+          gapi.auth2.init({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          });
+        }
+      }).catch((error) => {
+        console.error('Error initializing gapi:', error);
+      });
+    };
+
     if (typeof window !== 'undefined') {
-      const initClient = () => {
-        gapi.client.init({
-          clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          scope: 'https://www.googleapis.com/auth/calendar.events',
-        });
-      };
       gapi.load('client:auth2', initClient);
     }
   }, []);
@@ -72,10 +80,10 @@ const EventScheduler = () => {
         summary: title,
         description,
         start: {
-          date: date,
+          date: repeatedEvent.date,
         },
         end: {
-          date: date,
+          date: repeatedEvent.date,
         },
       };
 

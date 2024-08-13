@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { gapi } from 'gapi-script';
+import React, { useState } from 'react';
 
 interface Event {
   title: string;
@@ -31,44 +30,11 @@ const EventScheduler = () => {
   const [date, setDate] = useState('');
   const [subject, setSubject] = useState('');
 
-  useEffect(() => {
-    const initClient = () => {
-      gapi.client.init({
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/calendar.events',
-      }).then(() => {
-        if (gapi.auth2) {
-          gapi.auth2.init({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          });
-        }
-      }).catch((error) => {
-        console.error('Error initializing gapi:', error);
-      });
-    };
-
-    if (typeof window !== 'undefined') {
-      gapi.load('client:auth2', initClient);
-    }
-  }, []);
-
-  const handleSignIn = () => {
-    if (typeof window !== 'undefined' && gapi.auth2) {
-      gapi.auth2.getAuthInstance().signIn();
-    }
-  };
-
-  const handleSignOut = () => {
-    if (typeof window !== 'undefined' && gapi.auth2) {
-      gapi.auth2.getAuthInstance().signOut();
-    }
-  };
-
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     const newEvent: Event = { title, description, date, subject };
     setEvents([...events, newEvent]);
 
-    spacedRepetitionIntervals.forEach((interval) => {
+    spacedRepetitionIntervals.forEach(async (interval) => {
       const newDate = new Date(date);
       if (interval.unit === 'day') {
         newDate.setDate(newDate.getDate() + interval.interval);
@@ -76,39 +42,24 @@ const EventScheduler = () => {
       const repeatedEvent: Event = { title, description, date: newDate.toISOString().split('T')[0], subject };
       setEvents((prevEvents) => [...prevEvents, repeatedEvent]);
 
-      const gapiEvent = {
-        summary: title,
-        description,
-        start: {
-          date: repeatedEvent.date,
+      // Call API route to create event in Google Calendar
+      await fetch('/api/create-event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        end: {
+        body: JSON.stringify({
+          title,
+          description,
           date: repeatedEvent.date,
-        },
-      };
-
-      handleEventCreation(gapiEvent);
+        }),
+      });
     });
 
     setTitle('');
     setDescription('');
     setDate('');
     setSubject('');
-  };
-
-  const handleEventCreation = (gapiEvent: gapi.client.calendar.EventInput) => {
-    if (typeof window !== 'undefined' && gapi.client && gapi.client.calendar) {
-      gapi.client.calendar.events.insert({
-        calendarId: 'primary',
-        resource: gapiEvent,
-      })
-      .then((response: any) => {
-        console.log('Event created:', response.result);
-      })
-      .catch((err: Error) => {
-        console.error('Error creating event:', err);
-      });
-    }
   };
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -118,18 +69,6 @@ const EventScheduler = () => {
   return (
     <div className="max-w-md mx-auto p-4">
       <h2 className="text-lg font-bold mb-4">Event Scheduler</h2>
-      <button
-        onClick={handleSignIn}
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
-      >
-        Sign in with Google
-      </button>
-      <button
-        onClick={handleSignOut}
-        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-red-500 mb-4"
-      >
-        Sign out
-      </button>
       <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
         <div className="flex flex-col">
           <label className="text-sm font-medium" htmlFor="title">

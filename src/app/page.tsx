@@ -6,11 +6,9 @@ import { gapi } from 'gapi-script';
 interface Event {
   title: string;
   description: string;
-  date: string;
+  date: string; // Keep this as a string to simplify date handling
   subject: string;
 }
-
-const initialEvents: Event[] = [];
 
 const subjects = [
   { value: 'Physics', label: 'Physics' },
@@ -27,14 +25,14 @@ const spacedRepetitionIntervals = [
 ];
 
 const EventScheduler = () => {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    // Ensure GAPI is only loaded on the client side
+    // This will only run on the client side
     if (typeof window !== 'undefined') {
       const initClient = () => {
         gapi.client.init({
@@ -47,13 +45,13 @@ const EventScheduler = () => {
   }, []);
 
   const handleSignIn = () => {
-    if (gapi.auth2) {
+    if (typeof window !== 'undefined' && gapi.auth2) {
       gapi.auth2.getAuthInstance().signIn();
     }
   };
 
   const handleSignOut = () => {
-    if (gapi.auth2) {
+    if (typeof window !== 'undefined' && gapi.auth2) {
       gapi.auth2.getAuthInstance().signOut();
     }
   };
@@ -91,7 +89,7 @@ const EventScheduler = () => {
   };
 
   const handleEventCreation = (gapiEvent: gapi.client.calendar.EventInput) => {
-    if (gapi.client && gapi.client.calendar) {
+    if (typeof window !== 'undefined' && gapi.client && gapi.client.calendar) {
       gapi.client.calendar.events.insert({
         calendarId: 'primary',
         resource: gapiEvent,
@@ -104,15 +102,10 @@ const EventScheduler = () => {
       });
     }
   };
-  
+
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSubject(e.target.value);
   };
-
-  if (typeof window === 'undefined') {
-    // Return null on the server-side to avoid rendering anything
-    return null;
-  }
 
   return (
     <div className="max-w-md mx-auto p-4">
